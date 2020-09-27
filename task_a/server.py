@@ -18,6 +18,7 @@ import zmq
 from IPython import embed
 import utils_a
 
+
 class ModelServerProcess(Process):
     """ Server that doesn't share memory but is responsible for loading the model,
     listening for requests, receiving the data,
@@ -70,18 +71,18 @@ class ModelServerProcess(Process):
         logging.debug(f"Y.shape = {self.y.shape}")
         logging.debug(f"Y.dtype = {self.y.dtype}")
 
-    def find_peaks(self,native = True):
+    def find_peaks(self, native=True):
         """Find local peaks from heatmap"""
-        #convert tensor to 2d image
+        # convert tensor to 2d image
         preop = self.y.squeeze()
-        ##use from-scratch implimentation based on mask method
+        # use from-scratch implimentation based on mask method
         if native:
             postop = utils_a.find_peaks(preop)
-            #convert mask to array of indexes
+            # convert mask to array of indexes
             postop = np.nonzero(postop)
-            #convert shape from 2,n_peaks to n_peaks,2
+            # convert shape from 2,n_peaks to n_peaks,2
             self.coordinates = np.array(postop).transpose()
-        ##use skimage
+        # use skimage
         else:
             self.coordinates = peak_local_max(
                 preop, min_distance=5, threshold_rel=0.5)
@@ -95,9 +96,9 @@ class ModelServerProcess(Process):
         try:
             socket.bind("tcp://*:%s" % self.port)
         except zmq.ZMQError as e:
-            #We connect to client first, so we need to acknowledge.
-            #If this was a case where it was on the wrong port,
-            #further requests would still bubble up the error
+            # We connect to client first, so we need to acknowledge.
+            # If this was a case where it was on the wrong port,
+            # further requests would still bubble up the error
             logging.info('Surprise! Client has already connected!')
             return
 
@@ -105,13 +106,13 @@ class ModelServerProcess(Process):
         while not self.terminating:
             # Wait for next request from client
             message = socket.recv_pyobj()
-            #When client wants model to load
+            # When client wants model to load
             if message.path:
                 #message.path = '../models/best_model.h5'
                 logging.info("Server received model path: %s" % message.path)
                 self.load_model(message.path)
                 socket.send_pyobj('Model loaded')
-            #When client wants peak values returned
+            # When client wants peak values returned
             elif message.returnpeaks:
                 #
                 logging.info("Server received request for peaks")
@@ -121,7 +122,7 @@ class ModelServerProcess(Process):
                 self.find_peaks()
                 socket.send_pyobj(self.coordinates)
                 self.visualize_output()
-            #When client wants a heatmap returned
+            # When client wants a heatmap returned
             else:
                 logging.info("Server received request for heatmap")
                 self.image = message.image
