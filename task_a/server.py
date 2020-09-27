@@ -16,7 +16,7 @@ import tensorflow as tf
 import numpy as np
 import zmq
 from IPython import embed
-
+import utils_a
 
 class ModelServerProcess(Process):
     """ Server that doesn't share memory but is responsible for loading the model,
@@ -70,11 +70,22 @@ class ModelServerProcess(Process):
         logging.debug(f"Y.shape = {self.y.shape}")
         logging.debug(f"Y.dtype = {self.y.dtype}")
 
-    def find_peaks(self):
+    def find_peaks(self,native = True):
         """Find local peaks from heatmap"""
+        #convert tensor to 2d image
         preop = self.y.squeeze()
-        self.coordinates = peak_local_max(
-            preop, min_distance=5, threshold_rel=0.5)
+        ##use from-scratch implimentation based on mask method
+        if native:
+            postop = utils_a.find_peaks(preop)
+            #convert mask to array of indexes
+            postop = np.nonzero(postop)
+            #convert shape from 2,n_peaks to n_peaks,2
+            self.coordinates = np.array(postop).transpose()
+        ##use skimage
+        else:
+            self.coordinates = peak_local_max(
+                preop, min_distance=5, threshold_rel=0.5)
+
         logging.debug(f"coordinates.shape = {self.coordinates.shape}")
 
     def run(self):
