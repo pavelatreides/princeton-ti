@@ -3,14 +3,13 @@ This encapsulates the model object and initialization necessary
 to run all the functions of the client
 
 Potential Improvements:
-Lazy pirate pattern - Client Side
-Proof of concept closing and restarting sockets
 Save frames into a data structure, coordinates, heatmap, original image
 """
 import logging
 import matplotlib.pyplot as plt
 import cv2
 import zmq
+import sys
 from utils import MessageContainer
 
 
@@ -27,7 +26,8 @@ class ImageClient():
         self.overlay = None
         self.reader = None
         self.n_frames = None
-        self.REQUEST_TIMEOUT = 2500
+        # 5 second wait time before retry
+        self.REQUEST_TIMEOUT = 5000
         self.REQUEST_RETRIES = 3
         self.port = port
         self.context = None
@@ -106,16 +106,45 @@ class ImageClient():
                 message.returnpeaks = True
             self.socket.send_pyobj(message)
             logging.info('Client sent frame %s' % self.index)
-        #Wait for reply
-        self.overlay = self.socket.recv_pyobj()
-        logging.info("Client received reply")
+
+        # wait graciously for reply and handle delays like lazy pirate
+        retries_left = self.REQUEST_RETRIES
+        reply_received = False
+        while not reply_received:
+            if (self.socket.poll(self.REQUEST_TIMEOUT) & zmq.POLLIN) != 0:
+                self.overlay = self.socket.recv_pyobj()
+                # confirm object is not one of three response types
+                if (isinstance(self.overlay, str) or
+                        self.overlay.shape[1] in (2, 256)):
+                    logging.info("Client received reply")
+                    reply_received = True
+                    break
+                else:
+                    logging.error(
+                        "Malformed reply from server: %s", self.overlay)
+                    continue
+            retries_left -= 1
+            logging.warning("No response from server")
+            # Something is wrong from the server. Close socket and remove it.
+            self.socket.setsockopt(zmq.LINGER, 0)
+            self.socket.close()
+            if retries_left == 0:
+                logging.error("Server is corrupt or offline, abandoning..")
+                sys.exit()
+
+            logging.info("Reconnecting to server…")
+            # Create new connection
+            self.socket = self.context.socket(zmq.REQ)
+            self.socket.connect('tcp://localhost:%s' % self.port)
+            # resend request
+            logging.info("Resending request")
+            self.socket.send_pyobj(message)
 
 
 def main():
     """ Main """
     testclient = ImageClient()
-    #FIX THE BELOW
-    testclient.run()
+    testclient.start()
 
 
 if __name__ == '__main__':

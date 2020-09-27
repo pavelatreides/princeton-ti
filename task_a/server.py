@@ -3,9 +3,7 @@ Responsible for loading the model, listening for requests,receiving the data,
 predicting the output heatmaps,and sending it back to the client.
 
 Potential Improvements:
-Lazy Pirate pattern - Server side
-Proof of concept closing and restarting sockets
-Suppress error when server joins socket after client
+Implement timeout when client is silent or move whole paradigm to ROUTER/DEALER
 Implement own serializer for performance gains (see link below)
 https://pyzmq.readthedocs.io/en/latest/serialization.html#builtin-serialization
 """

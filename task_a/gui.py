@@ -2,7 +2,6 @@
 View/GUI for Task A. Here we define all visible elements, their styles and events
 
 Potential Improvements:
-Proof of concept closing/restarting sockets GUI connections
 Consider moving some big blocks to other methods, especially in init
 Add modules to pkg-extension-whitelist
 Make textedits editable only by dialog
