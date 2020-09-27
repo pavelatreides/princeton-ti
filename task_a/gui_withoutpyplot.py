@@ -1,10 +1,14 @@
 """
-View/GUI for Task A. Here we define all visible elements, their styles and events
+Alternate implementation GUI for Task A (roughly the same visuals).
+NOTE: This gui is deprecated, but here to showcase my work and potential avenues.
 
-Potential Improvements:
-Consider moving some big blocks to other methods, especially in init
-Add modules to pkg-extension-whitelist
-Make textedits editable only by dialog
+Originally, I wanted to reduce dependency on matplotlib to generate the
+visible images, opting instead for a QPixmap paradigm.
+
+Unfortunately, due to floating point errors in the conversion by Qt to the
+specified format, speckling appeared in the overlay rendering.
+To counter these artifacts, I reimplemented the gui using the Qt backend for
+matplotlib. The results can be found in gui.py.
 """
 import copy
 import sys
@@ -13,10 +17,10 @@ import numpy as np
 from PySide2 import QtCore as qc, QtWidgets as qw, QtGui as qg
 from client import ImageClient
 from server import ModelServerProcess
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-import matplotlib.pyplot as plt
+# for overlaying images, might solve artifact problem
+#from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+#from matplotlib.figure import Figure
 from IPython import embed
-import cv2
 
 
 class TaskAWidget(qw.QWidget):
@@ -38,7 +42,6 @@ class TaskAWidget(qw.QWidget):
         self.videopathbox.setPlaceholderText('Click Load to select the video')
         self.videodialog = qw.QFileDialog(self)
 
-
         # define model file picker
         self.modelpathbox = qw.QLineEdit()
         self.modelpathbox.setPlaceholderText(
@@ -58,16 +61,16 @@ class TaskAWidget(qw.QWidget):
 
         # define radios
         self.overlayradio = qw.QRadioButton('Heatmap', self)
-        #get heatmaps back by default
+        # get heatmaps back by default
         self.overlayradio.setChecked(True)
-        #don't touch until model is loaded by the server
+        # don't touch until model is loaded by the server
         self.overlayradio.setEnabled(False)
 
         self.peakradio = qw.QRadioButton('Peaks', self)
-        #don't touch until model is loaded by the server
+        # don't touch until model is loaded by the server
         self.peakradio.setEnabled(False)
 
-        #define frame counter
+        # define frame counter
         self.text = qw.QLabel(
             f"Frame Number - {self.client.index}" + f"/{self.client.n_frames} ")
         self.text.setAlignment(qc.Qt.AlignCenter)
@@ -79,14 +82,10 @@ class TaskAWidget(qw.QWidget):
         self.frameslider.setEnabled(False)
 
         # define view of frame
-        self.figure = plt.figure(figsize=(10, 10))
-        self.figure.set_facecolor('grey')
-        self.figure.text(0.5, 0.5, 'Welcome! Click Load to begin',
-                         horizontalalignment='center', verticalalignment='center', c='dimgrey')
-        self.figure.set_tight_layout({"pad": .0})
-        self.imageframe = FigureCanvas(self.figure)
-        # this is set arbitarily until every other element can have exact sizes
-        self.imageframe.setMinimumSize(420, 420)
+        self.imageframe = qg.QPixmap(400, 400)
+        self.label = qw.QLabel()
+        self.label.setAlignment(qc.Qt.AlignCenter)
+        self.label.setPixmap(self.imageframe)
 
         # Define 'Setup' panel
         self.setup_layout = qw.QHBoxLayout()
@@ -98,13 +97,13 @@ class TaskAWidget(qw.QWidget):
         # Define 'Frame' panel
         self.frame_layout = qw.QVBoxLayout()
         self.frame_layout.addWidget(self.text)
-        self.frame_layout.addWidget(self.imageframe)
+        self.frame_layout.addWidget(self.label)
         self.frame_layout.addWidget(self.frameslider)
         self.frame_layout.addWidget(self.predictbutton)
-        #define radios within 'Frame'
+        # define radios within 'Frame'
         self.radios = qw.QHBoxLayout()
         self.radios.addWidget(self.overlayradio,
-                               alignment=qc.Qt.AlignCenter)
+                              alignment=qc.Qt.AlignCenter)
         self.radios.addWidget(
             self.peakradio, alignment=qc.Qt.AlignCenter)
         self.frame_layout.addLayout(self.radios)
@@ -112,11 +111,11 @@ class TaskAWidget(qw.QWidget):
         self.frame_box = qw.QGroupBox("Frame")
         self.frame_box.setLayout(self.frame_layout)
 
-        #define 'Server' panel
+        # define 'Server' panel
         self.server_layout = qw.QVBoxLayout()
         self.server_layout.addWidget(self.busyindicator)
         self.server_layout.addWidget(self.serverbutton)
-        #define model loading widgets in 'Server'
+        # define model loading widgets in 'Server'
         self.server_sublayout = qw.QHBoxLayout()
         self.server_sub = qw.QWidget(self)
         self.server_sublayout.addWidget(self.modelpathbox)
@@ -153,8 +152,8 @@ class TaskAWidget(qw.QWidget):
         self.update_image()
         self.predictbutton.setText('Predict')
         # Predict only if model is already loaded
-        #Known performance issue for large videos,
-        #but only option if you want to prevent predictions before model load
+        # Known performance issue for large videos,
+        # but only option if you want to prevent predictions before model load
         if self.modelloaded:
             self.predictbutton.setEnabled(True)
 
@@ -163,8 +162,8 @@ class TaskAWidget(qw.QWidget):
         # disable button until connected
         logging.debug('Server %s' % self.serverbutton.text())
         if self.serverbutton.text() == "Start":
-            #don't let use do anything while waiting for request - synchronous..for now
-            #we do this elsewhere in the code
+            # don't let use do anything while waiting for request - synchronous..for now
+            # we do this elsewhere in the code
             self.setEnabled(False)
             self.serverbutton.setText('Stop')
             self.server = None
@@ -174,7 +173,7 @@ class TaskAWidget(qw.QWidget):
             self.busyindicator.setRange(0, 0)
             self.importmodelbutton.setEnabled(True)
         else:
-            #when you want to disconnect from the server
+            # when you want to disconnect from the server
             self.setEnabled(False)
             self.server.terminate()
             self.setEnabled(True)
@@ -194,10 +193,10 @@ class TaskAWidget(qw.QWidget):
                 self.client.send("predictheatmap")
             else:
                 self.client.send("predictpeaks")
-            #paint overlay
+            # paint overlay
             self.update_image("overlay")
             self.setEnabled(True)
-            # self.client.visualize_output()
+            self.client.visualize_output()
 
     def open_video_window(self):
         """When user imports the video"""
@@ -207,14 +206,14 @@ class TaskAWidget(qw.QWidget):
         # set video path to text input
         self.videopathbox.setText(videopath)
         self.client.imagepath = videopath
-        #actually load video
+        # actually load video
         self.client.load_frames()
         self.update_image()
 
-        #ensure WYSIWYG with video
+        # ensure WYSIWYG with video
         self.frameslider.setRange(0, self.client.n_frames - 1)
         self.frameslider.setValue(self.client.index)
-        #arbitary, mostly to avoid rendering slowdown
+        # arbitary, mostly to avoid rendering slowdown
         self.frameslider.setTickInterval(int(self.client.n_frames / 5))
         self.frameslider.setEnabled(True)
 
@@ -236,38 +235,55 @@ class TaskAWidget(qw.QWidget):
     def update_image(self, include=None):
         """When image in 'Frame' needs to reflect client state"""
         # define background, which is just frame of video
-        self.figure.clear()
-        background = self.client.currentframe.squeeze()
-        # assuming image is square, get scaling for coordinates
-        scalefactor = background.shape[0] / 256
-        plt.imshow(background, cmap="gray")
-        logging.debug(
-            f"self.client.currentframe.shape = {self.client.currentframe.shape}")
+        background_array = copy.deepcopy(self.client.currentframe)
+        height, width, __ = background_array.shape
+        logging.debug(f"background_array.shape = {background_array.shape}")
+        bytes_per_line = 3 * width
+        background = qg.QImage(background_array, width,
+                               height, bytes_per_line, qg.QImage.Format_RGB888)
         # Paint overlay("foreground") on top of background
         if include == "overlay":
             if self.client.overlay.shape[1] == 2:
-                for (x, y) in self.client.overlay * scalefactor:
-
-                    plt.plot(y, x, 'co')
+                # for coordinates
+                # arbitary width, looked nice
+                width = 20
+                painter = qg.QPainter()
+                painter.begin(background)
+                painter.setBrush(qg.QBrush(qg.Qt.cyan, qg.Qt.SolidPattern))
+                # draw circles where peaks are
+                for (x, y) in self.client.overlay:
+                    painter.drawEllipse(y * 4, x * 4, width, width)
                     logging.debug('Coordinate drawn')
+                painter.end()
             else:
                 # for heatmap
                 # alpha is higher because greyscale, not matplotlib colormap
-                alpha = 0.5
-                foreground = self.client.overlay.squeeze()
-                plt.imshow(foreground,
-                           extent=[
-                               -0.5,
-                               background.shape[1] - 0.5,
-                               background.shape[0] - 0.5,
-                               -0.5,
-                           ],  # (left, right, top, bottom),
-                           alpha=alpha
-                           )
+                alpha = 0.9
+                # define foreground
                 logging.debug(
                     f"self.client.overlay.shape = {self.client.overlay.shape}")
-        plt.axis('off')
-        self.imageframe.draw()
+                foreground_array = self.client.overlay.squeeze()
+                logging.debug(
+                    f"foreground_array.shape = {foreground_array.shape}")
+                logging.debug(f"Max = {np.amax(foreground_array)}")
+                foreground_array = (foreground_array *
+                                    255).round().astype(np.uint8)
+                width, height = foreground_array.shape
+                foreground = qg.QImage(
+                    foreground_array, width, height, qg.QImage.Format_Indexed8)
+                foreground_new = foreground.copy().scaled(background.size())
+                logging.warning(
+                    'Conversion of overlay to PySide2 compatible format  has introduced some artifacts (speckling). Does not affect predictions, but should be investigated')
+                # where the actual painting occurs (start and stop)
+                painter = qg.QPainter()
+                painter.begin(background)
+                painter.setOpacity(alpha)
+                painter.drawImage(0, 0, foreground_new)
+                painter.end()
+        self.imageframe = None
+        self.imageframe = qg.QPixmap.fromImage(background)
+        self.label.setPixmap(self.imageframe.scaledToWidth(400))
+        self.label.show()
         # making sure counter is correct after seek or prediction
         self.text.setText(
             f"Frame - {self.client.index+1}" + f"/{self.client.n_frames} ")
@@ -277,7 +293,7 @@ def main():
     """ Main """
     app = qw.QApplication([])
     widget = TaskAWidget()
-    widget.resize(550, 750)
+    widget.resize(550, 700)
     widget.show()
 
     sys.exit(app.exec_())
