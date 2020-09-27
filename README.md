@@ -19,15 +19,15 @@ The directory structure exists to faciliate the import and loading of provided f
   python3 -m venv /path/to/new/virtual/environment
   ```
 ## Major Dependencies
-PySide2
-tensorflow
-pyzmq
-opencv-python
-numpy
-scipy
-matplotlib
-multiprocessing
-scikit-image
+* PySide2
+* tensorflow
+* pyzmq
+* opencv-python
+* numpy
+* scipy
+* matplotlib
+* multiprocessing
+* scikit-image
 
 ## Usage
 Assuming all dependencies are installed, execution is as easy as:
