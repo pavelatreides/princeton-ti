@@ -81,7 +81,15 @@ class ModelServerProcess(Process):
         """Run server workflow, waiting for a request in between"""
         context = zmq.Context()
         socket = context.socket(zmq.REP)
-        socket.bind("tcp://*:%s" % self.port)
+        try:
+            socket.bind("tcp://*:%s" % self.port)
+        except zmq.ZMQError as e:
+            #We connect to client first, so we need to acknowledge.
+            #If this was a case where it was on the wrong port,
+            #further requests would still bubble up the error
+            logging.info('Surprise! Client has already connected!')
+            return
+
         # self-terminate if too long without any requests
         while not self.terminating:
             # Wait for next request from client
