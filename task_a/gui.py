@@ -6,7 +6,6 @@ Consider moving some big blocks to other methods, especially in init
 Add qt modules to pkg-extension-whitelist
 Make textedits editable only by dialog
 """
-import copy
 import sys
 import logging
 import numpy as np
