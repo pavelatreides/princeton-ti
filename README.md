@@ -2,6 +2,8 @@
 
 This is the link for the solutions to the technical challenge posited by Princeton University for the position of Research Software Engineer. Here you fill find the directories and files necessary to run Task A and Task B
 
+![demo](https://i.postimg.cc/25jsb2gn/task-a-demo.gif)
+
 ## Installation
 I highly recommend the creation of a virtual environment via 
 ```
