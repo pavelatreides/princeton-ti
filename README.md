@@ -3,6 +3,7 @@
 This is the link for the solutions to the technical challenge posited by Princeton University for the position of Research Software Engineer. Here you fill find the directories and files necessary to run Task A. 
 
 The widget was developed entirely in Python3/OS X using a Pyside2 application using ZMQ
+See a demo gif below!
 
 ![task-a-demo.gif](task-a-demo.gif)
 
