@@ -246,9 +246,11 @@ class TaskAWidget(qw.QWidget):
         # Paint overlay("foreground") on top of background
         if include == "overlay":
             if self.client.overlay.shape[1] == 2:
+                #offeset accounts for pixel shifting when resizing
+                offset = scalefactor/2
                 for (x, y) in self.client.overlay * scalefactor:
 
-                    plt.plot(y, x, 'co')
+                    plt.plot(y+offset, x+offset, 'co')
                     logging.debug('Coordinate drawn')
             else:
                 # for heatmap
@@ -257,10 +259,10 @@ class TaskAWidget(qw.QWidget):
                 foreground = self.client.overlay.squeeze()
                 plt.imshow(foreground,
                            extent=[
-                               -0.5,
-                               background.shape[1] - 0.5,
-                               background.shape[0] - 0.5,
-                               -0.5,
+                               0,
+                               background.shape[1],
+                               background.shape[0],
+                               0,
                            ],  # (left, right, top, bottom),
                            alpha=alpha
                            )
