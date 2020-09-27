@@ -3,7 +3,7 @@ View/GUI for Task A. Here we define all visible elements, their styles and event
 
 Potential Improvements:
 Consider moving some big blocks to other methods, especially in init
-Add modules to pkg-extension-whitelist
+Add qt modules to pkg-extension-whitelist
 Make textedits editable only by dialog
 """
 import copy
@@ -26,6 +26,7 @@ class TaskAWidget(qw.QWidget):
 
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Task A")
         self.client = ImageClient()
         self.client.start()
         self.server = None
@@ -37,7 +38,6 @@ class TaskAWidget(qw.QWidget):
         self.videopathbox = qw.QLineEdit()
         self.videopathbox.setPlaceholderText('Click Load to select the video')
         self.videodialog = qw.QFileDialog(self)
-
 
         # define model file picker
         self.modelpathbox = qw.QLineEdit()
@@ -58,16 +58,16 @@ class TaskAWidget(qw.QWidget):
 
         # define radios
         self.overlayradio = qw.QRadioButton('Heatmap', self)
-        #get heatmaps back by default
+        # get heatmaps back by default
         self.overlayradio.setChecked(True)
-        #don't touch until model is loaded by the server
+        # don't touch until model is loaded by the server
         self.overlayradio.setEnabled(False)
 
         self.peakradio = qw.QRadioButton('Peaks', self)
-        #don't touch until model is loaded by the server
+        # don't touch until model is loaded by the server
         self.peakradio.setEnabled(False)
 
-        #define frame counter
+        # define frame counter
         self.text = qw.QLabel(
             f"Frame Number - {self.client.index}" + f"/{self.client.n_frames} ")
         self.text.setAlignment(qc.Qt.AlignCenter)
@@ -101,10 +101,10 @@ class TaskAWidget(qw.QWidget):
         self.frame_layout.addWidget(self.imageframe)
         self.frame_layout.addWidget(self.frameslider)
         self.frame_layout.addWidget(self.predictbutton)
-        #define radios within 'Frame'
+        # define radios within 'Frame'
         self.radios = qw.QHBoxLayout()
         self.radios.addWidget(self.overlayradio,
-                               alignment=qc.Qt.AlignCenter)
+                              alignment=qc.Qt.AlignCenter)
         self.radios.addWidget(
             self.peakradio, alignment=qc.Qt.AlignCenter)
         self.frame_layout.addLayout(self.radios)
@@ -112,11 +112,11 @@ class TaskAWidget(qw.QWidget):
         self.frame_box = qw.QGroupBox("Frame")
         self.frame_box.setLayout(self.frame_layout)
 
-        #define 'Server' panel
+        # define 'Server' panel
         self.server_layout = qw.QVBoxLayout()
         self.server_layout.addWidget(self.busyindicator)
         self.server_layout.addWidget(self.serverbutton)
-        #define model loading widgets in 'Server'
+        # define model loading widgets in 'Server'
         self.server_sublayout = qw.QHBoxLayout()
         self.server_sub = qw.QWidget(self)
         self.server_sublayout.addWidget(self.modelpathbox)
@@ -153,8 +153,8 @@ class TaskAWidget(qw.QWidget):
         self.update_image()
         self.predictbutton.setText('Predict')
         # Predict only if model is already loaded
-        #Known performance issue for large videos,
-        #but only option if you want to prevent predictions before model load
+        # Known performance issue for large videos,
+        # but only option if you want to prevent predictions before model load
         if self.modelloaded:
             self.predictbutton.setEnabled(True)
 
@@ -163,8 +163,8 @@ class TaskAWidget(qw.QWidget):
         # disable button until connected
         logging.debug('Server %s' % self.serverbutton.text())
         if self.serverbutton.text() == "Start":
-            #don't let use do anything while waiting for request - synchronous..for now
-            #we do this elsewhere in the code
+            # don't let use do anything while waiting for request - synchronous..for now
+            # we do this elsewhere in the code
             self.setEnabled(False)
             self.serverbutton.setText('Stop')
             self.server = None
@@ -174,7 +174,7 @@ class TaskAWidget(qw.QWidget):
             self.busyindicator.setRange(0, 0)
             self.importmodelbutton.setEnabled(True)
         else:
-            #when you want to disconnect from the server
+            # when you want to disconnect from the server
             self.setEnabled(False)
             self.server.terminate()
             self.setEnabled(True)
@@ -194,7 +194,7 @@ class TaskAWidget(qw.QWidget):
                 self.client.send("predictheatmap")
             else:
                 self.client.send("predictpeaks")
-            #paint overlay
+            # paint overlay
             self.update_image("overlay")
             self.setEnabled(True)
             # self.client.visualize_output()
@@ -207,14 +207,14 @@ class TaskAWidget(qw.QWidget):
         # set video path to text input
         self.videopathbox.setText(videopath)
         self.client.imagepath = videopath
-        #actually load video
+        # actually load video
         self.client.load_frames()
         self.update_image()
 
-        #ensure WYSIWYG with video
+        # ensure WYSIWYG with video
         self.frameslider.setRange(0, self.client.n_frames - 1)
         self.frameslider.setValue(self.client.index)
-        #arbitary, mostly to avoid rendering slowdown
+        # arbitary, mostly to avoid rendering slowdown
         self.frameslider.setTickInterval(int(self.client.n_frames / 5))
         self.frameslider.setEnabled(True)
 

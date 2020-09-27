@@ -47,7 +47,7 @@ class ImageClient():
         self.n_frames = int(self.reader.get(cv2.CAP_PROP_FRAME_COUNT))
         logging.debug(f"Number of frames loaded = {self.n_frames}")
 
-        #start at first frame
+        # start at first frame
         self.seek(0)
 
     def seek(self, index):
@@ -74,12 +74,12 @@ class ImageClient():
         """Visualize output."""
         if not isinstance(self.overlay, str):
             plt.figure(figsize=(9, 8))
-            #If coordinates came back
+            # If coordinates came back
             if self.overlay.shape[1] == 2:
                 plt.scatter(1024, 1024)
                 plt.scatter(self.overlay[:, 1] * 4,
                             self.overlay[:, 0] * 4, alpha=None)
-            #If a heatmap came back
+            # If a heatmap came back
             else:
                 plt.imshow(self.overlay.squeeze())
             plt.show()
@@ -93,12 +93,12 @@ class ImageClient():
 
     def send(self, messagetype, path=None):
         """Send a message in a container to the server"""
-        #Naive message to load model
+        # Naive message to load model
         if messagetype == 'importmodel':
             message = MessageContainer(path=path)
             self.socket.send_pyobj(message)
             logging.info('Client sent model path: %s' % path)
-        #For heatmaps and peak coordinates
+        # For heatmaps and peak coordinates
         else:
             decoded = self.decode()
             message = MessageContainer(image=decoded)
