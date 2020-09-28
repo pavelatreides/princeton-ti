@@ -75,7 +75,7 @@ class ModelServerProcess(Process):
         """Find local peaks from heatmap"""
         # convert tensor to 2d image
         preop = self.y.squeeze()
-        # use from-scratch implimentation based on mask method
+        # use from-scratch implementation based on mask method
         if native:
             postop = utils_a.find_peaks(preop)
             # convert mask to array of indexes

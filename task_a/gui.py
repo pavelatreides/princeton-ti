@@ -1,6 +1,8 @@
 """
 View/GUI for Task A. Here we define all visible elements, their styles and events
 
+Constitutes second additional technical challenge
+
 Potential Improvements:
 Consider moving some big blocks to other methods, especially in init
 Add qt modules to pkg-extension-whitelist

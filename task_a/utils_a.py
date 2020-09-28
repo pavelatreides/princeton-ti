@@ -20,7 +20,8 @@ class MessageContainer():
 
 
 def find_peaks(heatmap):
-    """ We apply the "mask" method similar to github/erdogant/findpeaks
+    """Constitutes first additional technical challenge
+    We apply the "mask" method similar to github/erdogant/findpeaks
     directly"""
     # set threshold
     threshold = 0
