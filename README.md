@@ -1,6 +1,6 @@
 # princetontechinterview
 
-This is the link for the solutions to the technical challenge posited by Princeton University for the position of Research Software Engineer. Here you fill find the directories and files necessary to run Task A. 
+This is the link for the solutions to the technical challenge posited by Princeton University for the position of Research Software Engineer. Here you fill find the directories and files necessary to run Task A and a partial attempt at Task B I did with my remaining time.
 
 The widget was developed entirely in Python3/OS X using a Pyside2 application using ZMQ
 
@@ -36,6 +36,12 @@ cd task_a
 python3 task_a.py
 ```
 This will load (~15 sec) and run the GUI, which will create the server in a separate process and run the client.
+
+For Task B, the same:
+```
+cd task_b
+python3 task_b.py
+```
 
 ## Troubleshooting
 If you experience any issues getting the code to execute, please feel free to reach out to me at pavel.ser.isakov@gmail.com
